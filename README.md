@@ -13,19 +13,18 @@ A bot for Telegram that lets you create and edit templates right in the app
 9) The bot clears all previous posts for a more pleasant interface.
 10) Template owners can modify them at any time and at their own discretion
 
-# install
+# set up
 First of all You need to set up your config file -> settings.ini without ' or "
 
-token=BOT_TOKEN
-admin_id=ADMIN_ID_1,ADMIN_ID_2...
-bot_name=BOT_NAME_WITHOUT_@
-channel_id=-100...
-channel_url=https://t.me/your_channel_channel
-chat_url=https://t.me/your_chat_url
-faq_url=https://t.me/your_faq_url
-licence_url=https://t.me/your_licence
-
-make sure the bot is added to the channel as an administrator
+1) token=BOT_TOKEN
+2) admin_id=ADMIN_ID_1,ADMIN_ID_2...
+3) bot_name=BOT_NAME_WITHOUT_@
+4) channel_id=-100...
+5) channel_url=https://t.me/your_channel_channel
+6) chat_url=https://t.me/your_chat_url
+7) faq_url=https://t.me/your_faq_url
+8) licence_url=https://t.me/your_licence
+9) make sure the bot is added to the channel as an administrator
 
 # run bot
 1) You must have Python3.8+ installed
