@@ -81,10 +81,11 @@ def edit_my_tempalte_keyboard(template_id, show_all=True, remover=0):
                 )
 
         keyboard.add(InlineKeyboardButton(text='✏️ Добавить слой', callback_data=f'add_new_layer:{template_id}'),
-                    InlineKeyboardButton(text='🖼 Предпросмотр', callback_data=f'prescreem_with_layers:{template_id}:{0}'))
+                     InlineKeyboardButton(text='🧩 Добавить QR',callback_data=f'add_new_layer:{template_id}:QR'))
 
-        keyboard.add(InlineKeyboardButton(text='✅ Продолжить', callback_data=f'template_ready:{template_id}'),
-                    InlineKeyboardButton(text='❌ Удалить', callback_data=f'delete_template:{template_id}'))
+        keyboard.add(InlineKeyboardButton(text='❌ Удалить', callback_data=f'delete_template:{template_id}'),
+                     InlineKeyboardButton(text='🖼 Предпросмотр', callback_data=f'prescreem_with_layers:{template_id}:{0}'))
+        keyboard.add(InlineKeyboardButton(text='✅ Продолжить', callback_data=f'template_ready:{template_id}'))
     else:
         keyboard.add(InlineKeyboardButton(text='✏️ Добавить слой', callback_data=f'add_new_layer:{template_id}'))
         keyboard.add(InlineKeyboardButton(text='❌ Удалить', callback_data=f'delete_template:{template_id}'))
@@ -92,15 +93,17 @@ def edit_my_tempalte_keyboard(template_id, show_all=True, remover=0):
 
     return keyboard
 
-def edit_layer_keyboard(layer_id, template_id, align_center, align_right):
+def edit_layer_keyboard(layer_id, template_id, align_center, align_right, qr = None):
     data = {1: '🟢', 0: '🔴'}
-    
     keyboard = InlineKeyboardMarkup()
-    keyboard.add(InlineKeyboardButton(text='🏷 Изменить название', callback_data=f'edit_layer:name:{layer_id}'),
-                    InlineKeyboardButton(text='🔎 Установить размер шрифта', callback_data=f'edit_layer:font_size:{layer_id}'))
+    if not qr:
+        keyboard.add(InlineKeyboardButton(text='🏷 Изменить название', callback_data=f'edit_layer:name:{layer_id}'),
+                        InlineKeyboardButton(text='🔎 Установить размер шрифта', callback_data=f'edit_layer:font_size:{layer_id}'))
 
-    keyboard.add(InlineKeyboardButton(text='🔤 Изменить шрифт', callback_data=f'edit_layer:font:{layer_id}'),
-                    InlineKeyboardButton(text='🌈 Изменить цвет', callback_data=f'edit_layer:color:{layer_id}'))
+        keyboard.add(InlineKeyboardButton(text='🔤 Изменить шрифт', callback_data=f'edit_layer:font:{layer_id}'),
+                        InlineKeyboardButton(text='🌈 Изменить цвет', callback_data=f'edit_layer:color:{layer_id}'))
+    if qr:
+        keyboard.add(InlineKeyboardButton(text='🔎 Установить размер QR', callback_data=f'edit_layer:font_size:{layer_id}'))
 
     keyboard.add(InlineKeyboardButton(text='🌐 Изменить координаты', callback_data=f'edit_layer:coordinates:{layer_id}'))
     keyboard.add(InlineKeyboardButton(text=f'{data.get(align_center)} Выравнивание по центру', callback_data=f'change_layer_align:center:{template_id}:{layer_id}'))

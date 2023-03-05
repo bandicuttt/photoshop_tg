@@ -4,9 +4,9 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton as ikb
 
 def admin_menu_keyboard():
     keyboard = InlineKeyboardMarkup()
-    keyboard.add(ikb(text='🌇 Создать страну', callback_data='add_new_country'))
-    keyboard.add(ikb(text='🗂 Создать категорию', callback_data='add_new_category'))
-    keyboard.add(ikb(text='🖌 Создать шаблон', callback_data='add_new_template'))
+    # keyboard.add(ikb(text='🌇 Создать страну', callback_data='add_new_country'))
+    # keyboard.add(ikb(text='🗂 Создать категорию', callback_data='add_new_category'))
+    # keyboard.add(ikb(text='🖌 Создать шаблон', callback_data='add_new_template'))
     keyboard.add(ikb(text='⬇️ Добавить шрифт', callback_data='add_new_font'))
     keyboard.add(ikb(text='📢 Рассылка', callback_data='spam'))
     keyboard.add(ikb(text='☑️ Скрыть', callback_data='hide_msg'))

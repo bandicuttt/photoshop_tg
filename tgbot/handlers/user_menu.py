@@ -97,17 +97,21 @@ async def create_drawing_choosing_category_in_country(call: CallbackQuery, state
             text='<b>– Выберите категорию шаблона для редактирования✍🏻</b>',
             reply_markup=keyboard
         )
+        await state.finish()
     else:
         await call.answer('😔 | Категории в этой стране не найдены.', show_alert=False)
 
 @dp.callback_query_handler(text_startswith='edit_my_template:')
 async def edit_my_template(call: CallbackQuery, state: FSMContext):
-    template_id = call.data.split(':')[1]
-    await call.bot.send_message(
-                chat_id=call.from_user.id,
-                text='<b>– Меню создание шаблона 🧑🏻‍🎨\n\n<i>Выберите действия👇🏻</i></b>',
-                reply_markup=edit_my_tempalte_keyboard(template_id, True)
-            )
+    try:
+        template_id = call.data.split(':')[1]
+        await call.bot.send_message(
+                    chat_id=call.from_user.id,
+                    text='<b>– Меню создание шаблона 🧑🏻‍🎨\n\n<i>Выберите действия👇🏻</i></b>',
+                    reply_markup=edit_my_tempalte_keyboard(template_id, True)
+                )
+    except Exception as e:
+        print(e)
 
 @dp.callback_query_handler(text_startswith='show_all_templates_to_drawing_swipe:',state='*')
 async def category_swiper(call: CallbackQuery, state: FSMContext):
@@ -210,6 +214,8 @@ async def use_template_func(call: CallbackQuery, state: FSMContext):
             layers_list = []
             for i in layers:
                 layer_name = i['layer_name']
+                if 'https' in layer_name:
+                    layer_name = i['layer_name'].split(':')[0] + ':' + i['layer_name'].split(':')[1]
                 layers_list.append(f'<b>♦️ {layer_name}</b>')
             layers_list = '\n'.join(layers_list)
             message = f'<b>👩‍🎨 Введите аргументы: </b>\n\n{layers_list}'
@@ -240,53 +246,56 @@ async def use_template_func(call: CallbackQuery, state: FSMContext):
 
 @dp.message_handler(state='await_arugments_to_draw')
 async def draw_my_template(message: Message, state: FSMContext):
-    async with state.proxy() as proxy:
-        layers = proxy['layers']
-        caption = proxy['caption']
-        file_name = proxy['file_name']
-        template_id = proxy['template_id']
-        if os.path.exists('tgbot/files/image reference/{}.jpg'.format(file_name)):
-            image = open(f'tgbot/files/image reference/{file_name}.jpg','rb')
-        else:
-            image = open(f'tgbot/files/image source/{file_name}.jpg','rb')
+    try:
+        async with state.proxy() as proxy:
+            layers = proxy['layers']
+            caption = proxy['caption']
+            file_name = proxy['file_name']
+            template_id = proxy['template_id']
+            if os.path.exists('tgbot/files/image reference/{}.jpg'.format(file_name)):
+                image = open(f'tgbot/files/image reference/{file_name}.jpg','rb')
+            else:
+                image = open(f'tgbot/files/image source/{file_name}.jpg','rb')
 
 
-        if len((message.text).split('\n')) == len(layers):
-            await message.delete()
-            await proxy['msg'].delete()
-            layers_name = message.text.split('\n')
-            image = await prescreen_user_func(template_id, file_name, layers_name)
-            with image as document:
-                await message.bot.send_document(
-                    message.from_user.id,
-                    document=document,
-                    caption='<b>👩‍🎨 Ваш шаблон готов! </b>',
-                    reply_markup=hide_message_keyboard('Hide'),
-                )
-            # await message.bot.send_photo(
-            #     chat_id=message.from_user.id,
-            #     caption='<b>👩‍🎨 Ваш шаблон готов! </b>',
-            #     reply_markup=hide_message_keyboard('Hide'),
-            #     photo=image
-            # )
-            await state.finish()
-        else:
-            caption = caption + '\n\n➖➖➖➖➖➖➖➖➖➖➖➖\n<b>❌ Введено неверное количество аргументов!\nПопробуйте ещё раз!</b>'
-            await message.delete()
-            await proxy['msg'].delete()
-            with image as document:
-                proxy['msg']=await message.bot.send_document(
-                    chat_id=message.from_user.id,
-                    document=image,
-                    caption=caption,
-                    reply_markup=hide_message_keyboard('Cancel'),
-                )
-            # proxy['msg']=await message.bot.send_photo(
-            #     chat_id=message.from_user.id,
-            #     caption=caption,
-            #     photo=image,
-            #     reply_markup=hide_message_keyboard('Cancel'),
-            # )
+            if len((message.text).split('\n')) == len(layers):
+                await message.delete()
+                await proxy['msg'].delete()
+                layers_name = message.text.split('\n')
+                image = await prescreen_user_func(template_id, file_name, layers_name)
+                with image as document:
+                    await message.bot.send_document(
+                        message.from_user.id,
+                        document=document,
+                        caption='<b>👩‍🎨 Ваш шаблон готов! </b>',
+                        reply_markup=hide_message_keyboard('Hide'),
+                    )
+                # await message.bot.send_photo(
+                #     chat_id=message.from_user.id,
+                #     caption='<b>👩‍🎨 Ваш шаблон готов! </b>',
+                #     reply_markup=hide_message_keyboard('Hide'),
+                #     photo=image
+                # )
+                await state.finish()
+            else:
+                caption = caption + '\n\n➖➖➖➖➖➖➖➖➖➖➖➖\n<b>❌ Введено неверное количество аргументов!\nПопробуйте ещё раз!</b>'
+                await message.delete()
+                await proxy['msg'].delete()
+                with image as document:
+                    proxy['msg']=await message.bot.send_document(
+                        chat_id=message.from_user.id,
+                        document=image,
+                        caption=caption,
+                        reply_markup=hide_message_keyboard('Cancel'),
+                    )
+                # proxy['msg']=await message.bot.send_photo(
+                #     chat_id=message.from_user.id,
+                #     caption=caption,
+                #     photo=image,
+                #     reply_markup=hide_message_keyboard('Cancel'),
+                # )
+    except Exception as e:
+        print(e)
 
 
 @dp.callback_query_handler(text_startswith='edit_layer:', state='*')
@@ -390,16 +399,21 @@ async def set_my_coordinates(call: CallbackQuery, state: FSMContext):
         update_layerx(layer_id, coordinates=coordinates)
         layer_info = get_layerx(layer_id=layer_id)
         layer_name = layer_info['layer_name']
+        if 'https' in layer_name or 'http' in layer_name:
+            qr = True
+        else:
+            qr = None
         font = layer_info['font']
         font_color = layer_info['font_color']
         align_center = layer_info['align_center']
         align_right = layer_info['align_right']
         template_id = layer_info['template_id']
+        font_size = layer_info['font_size']
 
         await call.bot.send_message(
             chat_id=call.from_user.id,
-            text=layer_edit_message(layer_name, font, font_color, coordinates, align_center, align_right),
-            reply_markup=edit_layer_keyboard(layer_id, template_id, align_center, align_right)
+            text=layer_edit_message(layer_name, font, font_color, coordinates, align_center, align_right,font_size,qr),
+            reply_markup=edit_layer_keyboard(layer_id, template_id, align_center, align_right,qr)
         )
         # await call.bot.send_message(
         #         chat_id=call.from_user.id,
@@ -426,11 +440,16 @@ async def edit_font_color(message: Message, state: FSMContext):
             align_center = layer_info['align_center']
             align_right = layer_info['align_right']
             template_id = layer_info['template_id']
+            font_size = layer_info['font_size']
+            if 'https' in layer_name or 'http' in layer_name:
+                qr = True
+            else:
+                qr = None
 
             await message.bot.send_message(
                 chat_id=message.from_user.id,
-                text=layer_edit_message(layer_name, font, font_color, coordinates, align_center, align_right),
-                reply_markup=edit_layer_keyboard(layer_id, template_id, align_center, align_right)
+                text=layer_edit_message(layer_name, font, font_color, coordinates, align_center, align_right, font_size,qr),
+                reply_markup=edit_layer_keyboard(layer_id, template_id, align_center, align_right,qr)
             )
             # await message.bot.send_message(
             #     chat_id=message.from_user.id,
@@ -462,11 +481,16 @@ async def layer_edit_name(message: Message, state: FSMContext):
         align_center = layer_info['align_center']
         align_right = layer_info['align_right']
         template_id = layer_info['template_id']
+        font_size = layer_info['font_size']
+        if 'https' in layer_name or 'http' in layer_name:
+            qr = True
+        else:
+            qr = None
 
         await message.bot.send_message(
             chat_id=message.from_user.id,
-            text=layer_edit_message(layer_name, font, font_color, coordinates, align_center, align_right),
-            reply_markup=edit_layer_keyboard(layer_id, template_id, align_center, align_right)
+            text=layer_edit_message(layer_name, font, font_color, coordinates, align_center, align_right, font_size,qr),
+            reply_markup=edit_layer_keyboard(layer_id, template_id, align_center, align_right,qr)
         )
         # await message.bot.send_message(
         #     chat_id=message.from_user.id,
@@ -492,11 +516,16 @@ async def layer_edit_font_size(message: Message, state: FSMContext):
                 align_center = layer_info['align_center']
                 align_right = layer_info['align_right']
                 template_id = layer_info['template_id']
+                font_size = layer_info['font_size']
+                if 'https' in layer_name or 'http' in layer_name:
+                    qr = True
+                else:
+                    qr = None
 
                 await message.bot.send_message(
                     chat_id=message.from_user.id,
-                    text=layer_edit_message(layer_name, font, font_color, coordinates, align_center, align_right),
-                    reply_markup=edit_layer_keyboard(layer_id, template_id, align_center, align_right)
+                    text=layer_edit_message(layer_name, font, font_color, coordinates, align_center, align_right,font_size, qr),
+                    reply_markup=edit_layer_keyboard(layer_id, template_id, align_center, align_right, qr)
                 )
                 # await message.bot.send_message(
                 #     chat_id=message.from_user.id,
@@ -543,11 +572,16 @@ async def change_font(call: CallbackQuery, state: FSMContext):
     align_center = layer_info['align_center']
     align_right = layer_info['align_right']
     template_id = layer_info['template_id']
+    font_size = layer_info['font_size']
+    if 'https' in layer_name or 'http' in layer_name:
+        qr = True
+    else:
+        qr = None
 
     await call.bot.send_message(
         chat_id=call.from_user.id,
-        text=layer_edit_message(layer_name, font, font_color, coordinates, align_center, align_right),
-        reply_markup=edit_layer_keyboard(layer_id, template_id, align_center, align_right)
+        text=layer_edit_message(layer_name, font, font_color, coordinates, align_center, align_right,font_size, qr),
+        reply_markup=edit_layer_keyboard(layer_id, template_id, align_center, align_right, qr)
     )
     # await call.bot.send_message(
     #     chat_id=call.from_user.id,

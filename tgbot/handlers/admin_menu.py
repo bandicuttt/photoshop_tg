@@ -13,7 +13,7 @@ from tgbot.keyboards.inline_admin import accept_spam, accept_spam_keyboard, add_
 from tgbot.keyboards.inline_all import check_template_admin, hide_message_keyboard, edit_my_tempalte_keyboard, edit_layer_keyboard, main_keyboard_menu
 from tgbot.services.api_sqlite import accept_template, delete_layer, delete_template_with_template_id, get_all_from_layer_with_layer_id, get_all_from_user_category, get_all_from_user_country, get_all_from_user_template, get_all_layers, get_all_usersx, sql_add_new_country, sql_add_new_category, sql_add_new_template, get_template_with_file_name, get_all_from_layer, sql_add_new_layer, update_layer_align_right, update_layer_align_center
 from tgbot.keyboards.dynamic_inline_all  import select_all_countries_to_add_cat_kb, select_all_countries_to_add_template_kb, select_all_categories_to_add_template_kb, select_all_countries_to_create_template_kb, select_all_countries_to_make_drawing_kb, select_all_my_favorite
-from tgbot.utils.misc_functions import is_font, prescreen_func
+from tgbot.utils.misc_functions import create_qr_code, is_font, prescreen_func
 
 
 @dp.message_handler(state='blank', text=['👨🏻‍🔧 Панель администратора','🎨 Шаблоны','👨‍🎨 Создать', '✨ Избранное','👨‍💻 Профиль'])
@@ -639,15 +639,65 @@ async def delete_template(call: CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(text_startswith='add_new_layer:', state='*')
 async def add_new_layer(call: CallbackQuery, state: FSMContext):
-    async with state.proxy() as proxy:
-        await call.message.delete()
+    try:
+        async with state.proxy() as proxy:
+            proxy['template_id'] = call.data.split(':')[1]
+            await call.message.delete()
+            if len(call.data.split(':')) < 3:
+                proxy['msg']=await call.bot.send_message(
+                    chat_id=call.from_user.id,
+                    text='<b>– Введите название слоя 🧑🏻‍🎨</b>\n\n<i>Именно этот текст будет отображаться на фотографии.</i>',
+                    reply_markup=hide_message_keyboard('Cancel')
+                )
+                await state.set_state('add_new_layer:set_layer_name')
+            else:
+                proxy['msg']=await call.bot.send_message(
+                    chat_id=call.from_user.id,
+                    text='<b>– Введите ссылку для QR кода 🧑🏻‍🎨</b>\n\n<i>Формат: https://google.com</i>',
+                    reply_markup=hide_message_keyboard('Cancel')
+                )
+                await state.set_state('add_new_layer:set_qr_code')
+    except Exception as e:
+        print(e)
 
-        proxy['msg']=await call.bot.send_message(
-            chat_id=call.from_user.id,
-            text='<b>– Введите название слоя 🧑🏻‍🎨</b>\n\n<i>Именно этот текст будет отображаться на фотографии.</i>'
-        )
-        proxy['template_id'] = call.data.split(':')[1]
-        await state.set_state('add_new_layer:set_layer_name')
+
+@dp.message_handler(state='add_new_layer:set_qr_code')
+async def set_qr_code(message: Message, state: FSMContext):
+    try:
+        async with state.proxy() as proxy:
+            await proxy['msg'].delete()
+            await message.delete()
+
+            template_id = proxy['template_id']
+
+            while True:
+                file_name = randint(0, 99999999)
+                if os.path.exists('tgbot/files/image cache/{}_{}.png'.format(message.text,file_name)):
+                    pass
+                else:
+                    layer_name = await create_qr_code(message.text, file_name)
+                    break
+            
+            layer_name = str(message.text) + ':' + str(file_name)
+            await sql_add_new_layer(template_id, layer_name)
+            layer_info = await get_all_from_layer(template_id, layer_name)
+
+            layer_id = layer_info[0]
+            font = layer_info[3]
+            font_color = layer_info[8]
+            font_size = layer_info[4]
+            coordinates = layer_info[5]
+            align_center = layer_info[6]
+            align_right = layer_info[7]
+
+            await message.bot.send_message(
+                chat_id=message.from_user.id,
+                text=layer_edit_message(layer_name, font, font_color, coordinates, align_center, align_right,font_size,qr=True),
+                reply_markup=edit_layer_keyboard(layer_id, template_id, align_center, align_right,qr=True)
+            )
+    except Exception as e:
+        print(e)
+
 
 @dp.message_handler(state='add_new_layer:set_layer_name')
 async def set_layer_name(message: Message, state: FSMContext):
@@ -667,11 +717,16 @@ async def set_layer_name(message: Message, state: FSMContext):
         coordinates = layer_info[5]
         align_center = layer_info[6]
         align_right = layer_info[7]
+        font_size = layer_info[4]
+        if 'https' in layer_name or 'http' in layer_name:
+            qr = True
+        else:
+            qr = None
 
         await message.bot.send_message(
             chat_id=message.from_user.id,
-            text=layer_edit_message(layer_name, font, font_color, coordinates, align_center, align_right),
-            reply_markup=edit_layer_keyboard(layer_id, template_id, align_center, align_right)
+            text=layer_edit_message(layer_name, font, font_color, coordinates, align_center, align_right, font_size,qr),
+            reply_markup=edit_layer_keyboard(layer_id, template_id, align_center, align_right, qr)
         )
 
 
@@ -689,6 +744,7 @@ async def change_layer_align(call: CallbackQuery, state: FSMContext):
     font_color = layer_info[8]
     coordinates = layer_info[5]
     layer_name = layer_info[2]
+    font_size = layer_info[4]
 
     if mode == 'center':
         old_align = layer_info[6]
@@ -701,11 +757,15 @@ async def change_layer_align(call: CallbackQuery, state: FSMContext):
     layer_info = await get_all_from_layer_with_layer_id(layer_id)
     new_align_center = layer_info[6]
     new_align_right = layer_info[7]
+    if 'https' in layer_name or 'http' in layer_name:
+        qr = True
+    else:
+        qr = None
 
     await call.bot.send_message(
             chat_id=call.from_user.id,
-            text=layer_edit_message(layer_name, font, font_color, coordinates, new_align_center, new_align_right),
-            reply_markup=edit_layer_keyboard(layer_id, template_id, new_align_center, new_align_right)
+            text=layer_edit_message(layer_name, font, font_color, coordinates, new_align_center, new_align_right, font_size,qr),
+            reply_markup=edit_layer_keyboard(layer_id, template_id, new_align_center, new_align_right,qr)
         )
 
 @dp.callback_query_handler(text_startswith='prescreem_with_layers:', state='*')
@@ -828,11 +888,16 @@ async def show_layer_menu_to_edit_smth(call: CallbackQuery, state: FSMContext):
     coordinates = layer_info[5]
     align_center = layer_info[6]
     align_right = layer_info[7]
+    font_size = layer_info[4]
+    if 'https' in layer_name or 'http' in layer_name:
+        qr = True
+    else:
+        qr = None
 
     await call.bot.send_message(
         chat_id=call.from_user.id,
-        text=layer_edit_message(layer_name, font, font_color, coordinates, align_center, align_right),
-        reply_markup=edit_layer_keyboard(layer_id, template_id, align_center, align_right)
+        text=layer_edit_message(layer_name, font, font_color, coordinates, align_center, align_right, font_size,qr),
+        reply_markup=edit_layer_keyboard(layer_id, template_id, align_center, align_right,qr)
     )
 
 @dp.callback_query_handler(text_startswith='accept_template_admin:')

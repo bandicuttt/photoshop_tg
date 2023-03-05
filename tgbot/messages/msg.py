@@ -108,14 +108,16 @@ f'''
     )
 
 
-def layer_edit_message(layer_name, font, font_color, coordinates, align_center, align_right):
+def layer_edit_message(layer_name, font, font_color, coordinates, align_center, align_right,font_size,qr=None):
     data = {1: 'Да', 0: 'Нет'}
-    return(
+    if not qr:
+        return(
 f'''
 <b>👩‍🎨 Создание слоя </b>
 
 <b>Название:</b> <code>{layer_name}</code>
 <b>Шрифт:</b> <code>{font}</code>
+<b>Размер шрифта:</b> <code>{font_size}</code>
 <b>Цвет:</b> <code>{font_color}</code>
 <b>Координаты:</b> <code>{coordinates}</code>
 <b>Выровнять по центру:</b> <code>{data.get(align_center)}</code>
@@ -123,7 +125,20 @@ f'''
 
 <b>👇  Выберите действие</b>
 '''
-    )
+        )
+    return(
+f'''
+<b>👩‍🎨 Создание слоя </b>
+
+<b>Ссылка:</b> <code>{layer_name.split(':')[0]+layer_name.split(':')[1]}</code>
+<b>Координаты:</b> <code>{coordinates}</code>
+<b>Размер QR:</b> <code>{font_size}</code>
+<b>Выровнять по центру:</b> <code>{data.get(align_center)}</code>
+<b>Выровнять по правой стороне:</b> <code>{data.get(align_right)}</code>
+
+<b>👇  Выберите действие</b>
+'''
+        )
 
 
 def use_template(message, template_info):
