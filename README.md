@@ -2,16 +2,16 @@
 A bot for Telegram that lets you create and edit templates right in the app
 
 # full_description
-A bot for Telegram that lets you draw directly in the app.
--- You can create layers to templates and customize them (font size, font, font color, alignment and coordinates).
--- Implemented admin panel for easy communication with users (sending gifs/videos/text messages/photos/documents, approving user templates) 
--- Implementation of welcome captcha and anti-spam text protection to catch bots
--- Implementation of compulsory channel subscription and its further Middleware audit
--- Ability to add fonts via bot menu
--- The ability to rate other users' templates and add them to favorites
--- Ability to create your own templates and send them for moderation, after approval all interested bot users will be able to use that template.
--- The bot clears all previous posts for a more pleasant interface.
--- Template owners can modify them at any time and at their own discretion
+1) A bot for Telegram that lets you draw directly in the app.
+2) You can create layers to templates and customize them (font size, font, font color, alignment and coordinates).
+3) Implemented admin panel for easy communication with users (sending gifs/videos/text messages/photos/documents, approving user templates) 
+4) Implementation of welcome captcha and anti-spam text protection to catch bots
+5) Implementation of compulsory channel subscription and its further Middleware audit
+6) Ability to add fonts via bot menu
+7) The ability to rate other users' templates and add them to favorites
+8) Ability to create your own templates and send them for moderation, after approval all interested bot users will be able to use that template.
+9) The bot clears all previous posts for a more pleasant interface.
+10) Template owners can modify them at any time and at their own discretion
 
 # install
 First of all You need to set up your config file -> settings.ini without ' or "
